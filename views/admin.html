@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+        <title><%= title %></title>
+        <script type="text/javascript" src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+        <script type="text/javascript" src="http://apps.bdimg.com/libs/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="stylesheets/bootstrap.min.css" media="screen">
+    </head>
+</head>
+<body screen_capture_injected="true">
+    <div class="container">
+        <h1>
+            聊天室管理界面
+            <!--<span class="btn-sm btn btn-primary quit">退出</span>-->
+            <!--<span class="btn-sm btn btn-primary reback">返回聊天</span>-->
+        </h1>
+        <div class="setlimit">
+            <span>设置聊天室人数&nbsp;(<span id="usercount"></span>人)</span>
+                &nbsp;&nbsp;请输入:
+            <input id="setinput" type="text"/>
+            <button class="tn-sm btn btn-primary save" style="padding: 4px 6px;">保存</button>
+        </div>
+        <h2>
+            所有用户
+        </h2>
+        <table class="table">
+            <% for(i=0; i< data.length; i++)
+                {%>
+                    <tr>
+                        <td class="first">id:<span class="id"><%= data[i]._id %></span></td>
+                        <td>&nbsp;&nbsp;name:<span><%= data[i].name %></span></td>
+                        <td>
+                            &nbsp;&nbsp;password:
+                            <span style="width: 50px"><%= data[i].password %></span>
+                            <% if(data[i].IsAdmin) {%>
+                                <span class="btn-sm btn btn-primary modify" style="background-color: green">修改</span>
+                                <input style="display: none" type="text"/>
+                                <span style="display: none" class="btn-sm btn btn-primary save" style="background-color: green">保存</span>
+                            <% }else{ %>
+                                <span class="btn-sm btn btn-primary modify" style="background-color: #337AB7">修改</span>
+                                <input style="display: none" type="text"/>
+                                <span style="display: none" class="btn-sm btn btn-primary save" style="background-color: #337AB7">保存</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            管理员:&nbsp;<span><%= data[i].IsAdmin %></span>
+                            <% if(data[i].IsAdmin) {%>
+                                <span class="btn-sm btn btn-primary set" style="background-color: green">取消管理员</span>
+                            <% }else{ %>
+                                <span class="btn-sm btn btn-primary set" style="background-color: #337AB7">设为管理员</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            被禁言:&nbsp;<span><%= data[i].forbid %></span>
+                            <% if(data[i].IsAdmin) {%>
+                                <% if(data[i].forbid) {%>
+                                    <span class="btn-sm btn btn-primary setforbid" style="background-color: green">取消禁言</span>
+                                <% }else{ %>
+                                    <span class="btn-sm btn btn-primary setforbid" style="background-color: green">禁言</span>
+                                <% } %>
+                            <% }else{ %>
+                                <% if(data[i].forbid) {%>
+                                <span class="btn-sm btn btn-primary setforbid" style="background-color: #337AB7">取消禁言</span>
+                                <% }else{ %>
+                                <span class="btn-sm btn btn-primary setforbid" style="background-color: #337AB7">禁言</span>
+                                <% } %>
+                            <% } %>
+                        </td>
+                        <% if(data[i].IsAdmin) {%>
+                            <td><a class="btn-sm btn btn-primary delete" style="background-color: green">踢除</a></td>
+                        <% }else{ %>
+                            <td><a class="btn-sm btn btn-primary delete" style="background-color: #337AB7">踢除</a></td>
+                        <% } %>
+                    </tr>
+                <% }
+            %>
+        </table>
+
+    </div>
+    <script>
+        $(function(){
+            //删除用户
+            $('.delete').on('click',function(){
+                var id = $(this).parents("tr").find('.id').html();
+                var tr = $(this).parents("tr");
+                var msg = "确定要删除？"
+                if(confirm(msg)){
+                    $.ajax({
+                        url:'/admin',
+                        type:'delete',
+                        data:{"id":id},
+                        success:function(data){
+                            alert("已删除成功")
+                            $(tr).remove();
+                        },
+                        error:function(jqXHR,status){
+                            if(status == "error"){
+                                alert('出错');
+                            }
+                        }
+                    })
+                }
+
+            })
+            //修改密码
+            $('.modify').on('click',function(){
+                var input = $(this).siblings('input'),
+                     save = $(this).siblings('.save'),
+                     id = $(this).parents("tr").find('.id').html();
+                $(this).hide();
+                $(input).show();
+                $(save).show();
+                $(save).click(function(){
+                    if($(input).val()){
+                        $.ajax({
+                            type:'post',
+                            url:'/admin',
+                            data:{"id":id,"password":$(input).val()},
+                            success:function(data){
+                                location.reload();
+                            },
+                            error:function(jqXHR,status){
+                                if(status == 'error'){
+                                    alert('出错');
+                                }
+                            }
+                        })
+                    }
+                })
+            })
+            //设为管理员
+            $('.set').on('click',function(){
+                var id = $(this).parents("tr").find('.id').html(),
+                        temp = this,
+                        isAdmin = true;
+                if($(temp).html()=="设为管理员"){
+                    $.ajax({
+                        type:'post',
+                        url:'/isadmin',
+                        data:{"id":id,"IsAdmin":true},
+                        success:function(data){
+                            location.reload();
+                        },
+                        error:function(jqXHR,status){
+                            if(status == 'error'){
+                                alert('出错');
+                            }
+                        }
+                    })
+                }else{
+                    $.ajax({
+                        type:'post',
+                        url:'/isadmin',
+                        data:{"id":id,"IsAdmin":false},
+                        success:function(data){
+                            location.reload();
+                        },
+                        error:function(jqXHR,status){
+                            if(status == 'error'){
+                                alert('出错');
+                            }
+                        }
+                    })
+                }
+            })
+            //设置禁言
+            $('.setforbid').on('click',function(){
+                var id = $(this).parents("tr").find('.id').html(),
+                        temp = this,
+                        forbid = true;
+                if($(temp).html()=="禁言"){
+                    $.ajax({
+                        type:'put',
+                        url:'/admin',
+                        data:{"id":id,"forbid":true},
+                        success:function(data){
+                            alert('成功禁言');
+                            $(temp).html("取消禁言");
+                            location.reload();
+                        },
+                        error:function(jqXHR,status){
+                            if(status == 'error'){
+                                alert('出错');
+                            }
+                        }
+                    })
+                }else{
+                    $.ajax({
+                        type:'put',
+                        url:'/admin',
+                        data:{"id":id,"forbid":false},
+                        success:function(data){
+                            alert('成功取消禁言');
+                            $(temp).html("禁言");
+                            location.reload();
+                        },
+                        error:function(jqXHR,status){
+                            if(status == 'error'){
+                                alert('出错');
+                            }
+                        }
+                    })
+                }
+
+            })
+            $('.quit').click(function(){
+                location.href = "/logout";
+            })
+            $('.reback').click(function(){
+                history.go(-1);
+            })
+            //获取人数上限值
+            $.ajax({
+                type:'get',
+                url:'/limit',
+                success:function(data){
+                    $('#usercount').html(data.count);
+                },
+                error:function(jqXHR,status){
+                    if(status=="error"){
+                        console.log("出错");
+                    }
+                }
+            })
+            //设置人数上限
+            $('.setlimit .save').on('click',function(){
+                if($('#setinput').val()){
+                    $.ajax({
+                        type:'post',
+                        url:'/setlimit',
+                        data:{'count':$('#setinput').val()},
+                        success:function(){
+                            alert('设置成功');
+                            location.reload();
+                        },
+                        error:function(jqXHR,status){
+                            if(status=='error'){
+                                alert('设置失败');
+                            }
+
+                        }
+                    })
+                }else{
+                    alert('请填写人数');
+                }
+            })
+        })
+    </script>
+</body>
+</html>

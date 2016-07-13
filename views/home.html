@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="format-detection" content="telephone=no"/>
+    <meta name="format-detection" content="email=no"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0" name="viewport">
+    <title>多人聊天室</title>
+    <link rel="stylesheet" type="text/css" href="stylesheets/style1.css" />
+    <!--[if lt IE 8]><script src="javascripts/json3.min.js"></script><![endif]-->
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" src="http://apps.bdimg.com/libs/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="stylesheets/bootstrap.min.css" media="screen">
+</head>
+<body>
+<div id="loginbox">
+    <div style="width:260px;margin:200px auto 10px;">
+        欢迎
+        <br/>
+        <br/>
+        <p type="text" style="width:180px;"  id="username" name="username"></p>
+        <input type="button"  value="进入聊天" onclick="CHAT.usernameSubmit();"/>
+    </div>
+    <div style="    width: 260px;
+    margin: 00px auto ">
+
+    </div>
+</div>
+<div id="chatbox" style="display:none;">
+    <div style="background:#3d3d3d;height: 28px; width: 100%;font-size:12px;">
+        <div style="line-height: 28px;color:#fff;">
+            <span style="text-align:left;margin-left:10px;">Websocket多人聊天室</span>
+
+                    <span style="float:right; margin-right:10px;"><span id="showusername"></span> |
+					<a href="javascript:;" id="reback" onclick="CHAT.logout()" style="color:#fff;">退出</a></span>
+                    <a class="btn btn-sm btn btn-primary enter" target="_blank" href="/admin" style="float: right;
+    padding: 3px 5px;
+    margin-right: 5px;">管理</a>
+        </div>
+    </div>
+    <div id="doc" >
+        <div id="chat">
+            <div id="onlinecount" style="background:#EFEFF4; font-size:12px; margin-top:10px; margin-left:10px; color:#666;">
+            </div>
+            <div id="message" class="message">
+
+            </div>
+            <div id="emojiWrapper" style="height: 320px; float: left; overflow: scroll;display: none">
+            </div>
+            <div class="input-box">
+                <div class="input">
+                    <input type="text" maxlength="140" placeholder="请输入聊天内容，按Ctrl提交" id="content" name="content">
+                </div>
+                <div class="tool-item ng-scope">
+                    <label for="sendImage" class="imageLable">
+                        <input onclick="Click_sendImage()" id="btnImg" type="button" value="图片" style="    height: 27px;
+    width: 40px;padding-top: 0px; padding-bottom: 0px; margin-bottom: 0px;" />
+                        <script type="text/javascript">
+                            function Click_sendImage() {
+                                $("#sendImage").click();
+                            }
+                        </script>
+                        <input id="sendImage" style="display: none;" type="file" />
+                    </label>
+                </div>
+                <div class="tool-item">
+                    <input id="emoji" type="button" value="表情" title="表情" style="    border-radius: 3px;border: 0;margin: 0 5px 0 5px;padding: 4px 5px;" />
+                </div>
+                <div class="clear">
+                    <button type="button" id="clearBtn" style="border-radius: 3px;border: 0;margin: 0 5px 0 5px;    padding: 3px 5px;">清空</button>
+                </div>
+                <div class="action">
+                    <button type="button" id="mjr_send">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="javascripts/client.js"></script>
+
+<script>
+    $(function(){
+        $.ajax({
+            type:'get',
+            url:'/judgeadmin',
+            success:function(data){
+                if(data.admin){
+                    $('.enter').show();
+                }else{
+                    $('.enter').hide();
+                }
+            }
+        });
+        if(sessionStorage.name == "游客"){
+            $('#content,#mjr_send,#sendImage,#emoji').attr('disabled','disabled');
+            $('#reback').hide();
+        }
+        CHAT.clearmessage();
+        CHAT.showEmoji();
+        $('#username').html(sessionStorage.name);
+        $('#mjr_send').on('click',function(){
+            var temp = this;
+            $.ajax({
+                type:'post',
+                url:'/forbid',
+                data:{"id":sessionStorage.loginid},
+                success:function(data){
+                    if(!data.isDelete&&!data.forbid){
+                        $('#content').attr('disabled',false);
+                        CHAT.submit();
+                    }else if(data.isDelete){
+                        alert('已被踢出聊天室');
+                        location.href = "/login";
+                    }else{
+                        alert('已被禁言');
+                        $('#content').attr('disabled','disabled');
+                    }
+                }
+            })
+        })
+
+        $("#sendImage").on('click',function(){
+            $.ajax({
+                type:'post',
+                url:'/forbid',
+                data:{"id":sessionStorage.loginid},
+                success:function(data){
+                    if(!data.isDelete&&!data.forbid){
+                        $('#sendImage').attr('disabled',false);
+                        CHAT.imgchange();
+                    }else if(data.isDelete){
+                        if(sessionStorage.name=="游客"){
+                            alert('你没有权限');
+                        }else{
+                            alert('已被踢出聊天室');
+                            location.href = "/login";
+                        }
+                    }else{
+                        alert('已被禁言');
+                        $('#sendImage').attr('disabled','disabled');
+                    }
+                }
+            })
+        })
+
+    })
+
+</script>
+</body>
+</html>
